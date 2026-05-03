@@ -22,8 +22,8 @@ proving it. There's a hosted endpoint and a shared preview token so you
 can try it in 30 seconds without signup :
 
 ```bash
-curl -s -X POST https://preview.typerion.dev/v1/verify \
-  -H "Authorization: Bearer preview-token" \
+curl -s -X POST https://typerion-v1-typerion-server-r3wh.vercel.app/v1/verify \
+  -H "Authorization: Bearer pat_typerion_preview_demo_2026_05" \
   -H "Content-Type: application/json" \
   -d @- <<'JSON' | jq
 {

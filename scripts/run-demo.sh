@@ -13,8 +13,8 @@ set -euo pipefail
 
 # Default : the hosted preview endpoint with the shared token. Override
 # with TYPERION_API + TYPERION_PAT if you're running the server locally.
-API="${TYPERION_API:-https://preview.typerion.dev}"
-PAT="${TYPERION_PAT:-preview-token}"
+API="${TYPERION_API:-https://typerion-v1-typerion-server-r3wh.vercel.app}"
+PAT="${TYPERION_PAT:-pat_typerion_preview_demo_2026_05}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASELINE="$ROOT/examples/baseline.json"

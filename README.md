@@ -13,9 +13,9 @@ useful kind.
 ## Try it now
 
 ```bash
-export TYPERION_TOKEN=preview-token
+export TYPERION_TOKEN=pat_typerion_preview_demo_2026_05
 
-curl -s -X POST https://preview.typerion.dev/v1/verify \
+curl -s -X POST https://typerion-v1-typerion-server-r3wh.vercel.app/v1/verify \
   -H "Authorization: Bearer $TYPERION_TOKEN" \
   -H "Content-Type: application/json" \
   -d @- <<'JSON' | jq
@@ -43,7 +43,7 @@ The hosted endpoint is rate-limited (30 req/min) and disposable —
 torn down when the preview window closes. No signup, no API key to
 generate. Read on for the why.
 
-> **Note on the shared `preview-token`** : it's a public token for
+> **Note on the shared `pat_typerion_preview_demo_2026_05`** : it's a public token for
 > this demo instance only — rate-limited and isolated. Real auth
 > isn't the focus of this preview ; the kernel decision is.
 
@@ -129,21 +129,21 @@ That's it.
 
 ## Run the demo
 
-The kernel is hosted at `https://preview.typerion.dev` during the preview.
+The kernel is hosted at `https://typerion-v1-typerion-server-r3wh.vercel.app` during the preview.
 A shared preview token is built into the script — no signup, no API key
 to generate, just curl:
 
 ```bash
 git clone <this repo>
 cd typerion-oss
-./scripts/run-demo.sh                      # uses preview.typerion.dev
+./scripts/run-demo.sh                      # hits the hosted preview endpoint
 ```
 
 Or hit it directly:
 
 ```bash
-curl -s -X POST https://preview.typerion.dev/v1/verify \
-  -H "Authorization: Bearer preview-token" \
+curl -s -X POST https://typerion-v1-typerion-server-r3wh.vercel.app/v1/verify \
+  -H "Authorization: Bearer pat_typerion_preview_demo_2026_05" \
   -H "Content-Type: application/json" \
   -d "$(jq -n \
     --argjson b "$(cat examples/baseline.json)" \
