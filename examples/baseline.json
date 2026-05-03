@@ -1,0 +1,10 @@
+{
+  "entities": [
+    {
+      "name": "User",
+      "fields": [
+        { "name": "email", "type": "string" }
+      ]
+    }
+  ]
+}
