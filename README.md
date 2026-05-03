@@ -10,6 +10,39 @@ no runtime integration, no guarantees. Posted to find out whether the
 core idea holds technically. Feedback that **breaks it** is the most
 useful kind.
 
+## Try it now
+
+```bash
+export TYPERION_TOKEN=preview-token
+
+curl -s -X POST https://preview.typerion.dev/v1/verify \
+  -H "Authorization: Bearer $TYPERION_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @- <<'JSON' | jq
+{
+  "baseline":  {"kind":"lossy-inline","value":{"entities":[{"name":"User","fields":[{"name":"email","type":"string"}]}]}},
+  "candidate": {"kind":"lossy-inline","value":{"entities":[{"name":"User","fields":[{"name":"email","type":"string"},{"name":"emailAddress","type":"string","sqlName":"email"}]}]}}
+}
+JSON
+```
+
+Expected output :
+
+```json
+{
+  "status": "fail",
+  "reasons": [
+    "Entity 'User' field 'emailAddress' projects to TS name 'emailAddress' but SQL name 'email' — runtime writes to TS field 'emailAddress' will not reach SQL column 'email'.",
+    "Entity 'User' has multiple fields collapsing into SQL name 'email' (logical fields: 'email', 'emailAddress') — only one survives at runtime, causing silent data loss."
+  ],
+  "fingerprint": "578f09fce81c380cb2abb303a0d253a8"
+}
+```
+
+The hosted endpoint is rate-limited (30 req/min) and disposable —
+torn down when the preview window closes. No signup, no API key to
+generate. Read on for the why.
+
 ---
 
 ## The case
