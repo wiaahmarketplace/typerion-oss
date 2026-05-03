@@ -58,10 +58,13 @@ removed):
 ```
 
 Two TS fields silently collapse onto one SQL column. At runtime, a
-write to `user.emailAddress` overwrites `user.email`. Nothing in the
-standard stack catches this — the type-checker sees two names, the
-migration tool sees one column, neither checks the cross-projection
-invariant.
+write to `user.emailAddress` overwrites `user.email`.
+
+The framing that matters : **individually valid, collectively
+inconsistent**. The TypeScript compiler runs and says OK. The SQL
+migration runs and says OK. Each tool checks its own projection
+against itself. Nothing in the standard stack checks the
+cross-projection invariant.
 
 I built a small kernel that takes a baseline IR and a candidate IR
 and verifies the candidate's TS projection agrees with its SQL
@@ -142,6 +145,32 @@ Watch for these in comments and capture each in `docs/preview/feedback.md`:
 Do not engage with *"interesting"*, *"cool idea"*, *"impressive"* —
 those are noise. Engage with concrete counter-examples and concrete
 proposed cases.
+
+## Response patterns (use these verbatim or close)
+
+For each comment class, one canonical response. Do **not** improvise
+under pressure — improvising is how a thread becomes a debate
+instead of a discovery.
+
+| Comment class | Canonical response |
+|---|---|
+| *"My ORM catches this"* | *"Nice — which ORM + version + config? I'd love to add it as a passing case in the README and credit you."* |
+| *"This is just schema validation / already solved"* | *"Do you have a concrete example or tool that checks TS ↔ SQL coherence on this exact case? I'd want to run the same fixture through it and compare."* |
+| *"Interesting / cool idea"* | *"Do you have a concrete case from your codebase? I can try to run it through the verifier and show you what it returns."* |
+| *"What about \<other target\> ?"* | *"Out of scope for this preview by design — only TS ↔ SQL. If the cross-target principle holds, \<other target\> is the next pair to support."* |
+| *"Why a hardcoded preview token / where's auth?"* | *"This is a public preview token for the demo instance only — rate-limited and isolated. Real auth isn't the focus of this preview ; the kernel decision is."* |
+| *"This won't scale / I see a perf issue"* | *"Agreed for this preview — single-region Fly.io machine, 256MB. Phase 6 chooses the runtime. Right now I'm testing whether the decision logic is correct, not whether it's fast."* |
+
+Three rules for replying :
+
+1. **Always pivot to a concrete case.** "Send me the IR / config /
+   repo and I'll run it" beats every abstract debate.
+2. **Never defend the architecture.** This is a preview to test ONE
+   primitive. If someone debates infra / auth / pricing, redirect
+   to the kernel question.
+3. **Engage failure honestly.** If a counter-example breaks the
+   demo, *"good catch — issue opened, will reply with what I find"*
+   is infinitely stronger than *"actually that's by design"*.
 
 If kill-switch trips: stop. Do not push back. Document what you saw.
 Decide whether to address or pivot in writing, then proceed.

@@ -43,6 +43,15 @@ The hosted endpoint is rate-limited (30 req/min) and disposable —
 torn down when the preview window closes. No signup, no API key to
 generate. Read on for the why.
 
+> **Note on the shared `preview-token`** : it's a public token for
+> this demo instance only — rate-limited and isolated. Real auth
+> isn't the focus of this preview ; the kernel decision is.
+
+> **TL;DR of the case below** : the TS compiler says OK. The SQL
+> migration runs OK. **Individually valid, collectively
+> inconsistent.** Nothing in the standard stack checks the
+> cross-projection invariant.
+
 ---
 
 ## The case
