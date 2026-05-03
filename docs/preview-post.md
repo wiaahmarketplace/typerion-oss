@@ -108,7 +108,7 @@ What I'm trying to find out:
 The repo with the example, the run script, and an issue template
 that asks the right questions:
 
-  https://github.com/<org>/typerion-oss
+  https://github.com/wiaahmarketplace/typerion-oss
 
 If you try it on a case from your codebase and something breaks (the
 demo, the framing, your assumptions), please file an issue with the
@@ -123,7 +123,7 @@ Thanks for reading.
 ## Pre-submission checklist
 
 - [ ] Title chosen (A or B)
-- [ ] Public URL of typerion-oss inserted (replace `<org>`)
+- [ ] Public URL of typerion-oss inserted (replace `wiaahmarketplace`)
 - [ ] `typerion-server` deployed somewhere reachable, OR README clearly states "DM for access" path
 - [ ] Issue template visible at `.github/ISSUE_TEMPLATE/preview-feedback.md`
 - [ ] No claims I can't substantiate within 30 seconds
