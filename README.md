@@ -2,7 +2,8 @@
 
 > **Your types are correct.**
 > **Your database is correct.**
-> **Your system is still broken.**
+> **Your system is still broken** — in specific edge cases like the
+> one below.
 
 This is an **early preview**. One check, one pair of targets (TS ↔ SQL),
 no runtime integration, no guarantees. Posted to find out whether the
@@ -86,25 +87,21 @@ That's it.
 
 ## Run the demo
 
+The kernel is hosted at `https://preview.typerion.dev` during the preview.
+A shared preview token is built into the script — no signup, no API key
+to generate, just curl:
+
 ```bash
 git clone <this repo>
 cd typerion-oss
-pnpm install
-pnpm build
-
-# In another terminal: start the server (private repo for now —
-# DM/email me for access during preview)
-TYPERION_PORT=4101 node ../typerion-server/dist/index.js
-
-# Run the demo
-./scripts/run-demo.sh
+./scripts/run-demo.sh                      # uses preview.typerion.dev
 ```
 
 Or hit it directly:
 
 ```bash
-curl -s -X POST http://localhost:4101/v1/verify \
-  -H "Authorization: Bearer pat_$(openssl rand -hex 16)" \
+curl -s -X POST https://preview.typerion.dev/v1/verify \
+  -H "Authorization: Bearer preview-token" \
   -H "Content-Type: application/json" \
   -d "$(jq -n \
     --argjson b "$(cat examples/baseline.json)" \
@@ -112,6 +109,10 @@ curl -s -X POST http://localhost:4101/v1/verify \
     '{baseline:{kind:"lossy-inline",value:$b},candidate:{kind:"lossy-inline",value:$c}}')" \
   | jq
 ```
+
+The hosted endpoint is rate-limited (30 req/min) and will be torn down
+when the preview window closes. Don't build anything against it — try
+the demo and tell me what you find.
 
 ## Limits (read first)
 
@@ -133,9 +134,12 @@ If you try this on a case from your codebase — real or remembered —
 [issue template](.github/ISSUE_TEMPLATE/preview-feedback.md) asks
 the right questions.
 
-If your reaction is *"my ORM already catches this"*, please send
-the exact ORM + version + config. I want to know where the gap
-narrows or disappears.
+**If your ORM catches this reliably, please send me the config —
+I'll add it as a passing case** and credit you in the README. I'd
+rather know that gap exists than argue about it. Particularly
+interested in : Drizzle (`drizzle-kit check`), Prisma (`prisma
+validate`), TypeORM, Kysely, MikroORM, plain `pg` + `tsc` + a
+linter. Exact version + tsconfig + schema config, please.
 
 ## License
 

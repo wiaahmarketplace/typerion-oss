@@ -11,8 +11,10 @@
 
 set -euo pipefail
 
-API="${TYPERION_API:-http://localhost:4101}"
-PAT="${TYPERION_PAT:-pat_$(openssl rand -hex 16 2>/dev/null || echo placeholdertoken123456)}"
+# Default : the hosted preview endpoint with the shared token. Override
+# with TYPERION_API + TYPERION_PAT if you're running the server locally.
+API="${TYPERION_API:-https://preview.typerion.dev}"
+PAT="${TYPERION_PAT:-preview-token}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASELINE="$ROOT/examples/baseline.json"

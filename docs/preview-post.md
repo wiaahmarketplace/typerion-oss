@@ -18,7 +18,20 @@ Hi HN,
 
 This is an early preview of one piece of a system I'm building. Posting
 because I'd rather know now if the idea is wrong than spend six months
-proving it.
+proving it. There's a hosted endpoint and a shared preview token so you
+can try it in 30 seconds without signup :
+
+```bash
+curl -s -X POST https://preview.typerion.dev/v1/verify \
+  -H "Authorization: Bearer preview-token" \
+  -H "Content-Type: application/json" \
+  -d @- <<'JSON' | jq
+{
+  "baseline":  {"kind":"lossy-inline","value":{"entities":[{"name":"User","fields":[{"name":"email","type":"string"}]}]}},
+  "candidate": {"kind":"lossy-inline","value":{"entities":[{"name":"User","fields":[{"name":"email","type":"string"},{"name":"emailAddress","type":"string","sqlName":"email"}]}]}}
+}
+JSON
+```
 
 The case:
 
