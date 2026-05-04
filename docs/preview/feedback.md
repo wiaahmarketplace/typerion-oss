@@ -5,6 +5,7 @@ verbatim quotes, not summaries — they're the only honest record.
 
 | Date | Source | Quote (verbatim) | Class | Action |
 |---|---|---|---|---|
+| 2026-05-04 | GitHub @tkersey (831 followers — Tim Kersey, Principal Context Engineer @ Artium AI, ex-Pivotal Labs / VMware Tanzu / Carbon Five, ~30 yrs in software, active on functional.cafe, holds Codex Deployment Practitioner cert) | (no quote — repo star, no message) | C-weak (surface curiosity, not yet usage) — but high-relevance profile : Artium = consultancy building enterprise agentic systems, exact ICP overlap | DM via Mastodon @tk@functional.cafe with hook on AI-generated code drift across TS+SQL projections + ask which audit fixture (if any) matches a bug he's seen in client engagements |
 | <!-- e.g. 2026-05-12 --> | <!-- HN id, X handle, GH user --> | <!-- "this would have caught a bug we shipped last quarter" --> | <!-- B / C --> | <!-- "follow up: ask for redacted IR" --> |
 
 ## Signal classes

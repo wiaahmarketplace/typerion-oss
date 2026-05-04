@@ -156,6 +156,37 @@ The hosted endpoint is rate-limited (30 req/min) and will be torn down
 when the preview window closes. Don't build anything against it — try
 the demo and tell me what you find.
 
+## Reproducible audit
+
+The preview ships with a fixture set and an audit script that re-runs
+the kernel against every fixture and asserts each output matches a
+pinned `{status, reasons, fingerprint}`.
+
+```bash
+pnpm audit
+# or
+./audit/run-audit.sh
+```
+
+The 10 fixtures cover real classes of cross-system inconsistency
+commonly observed in production codebases : legacy schema-shim
+collapses, mid-flight renames that never finished, virtual-property
+leaks, DB-trigger columns the application doesn't model, i18n field
+aliasing collisions, and partial column renames after normalization
+migrations. Each fixture carries a short `narrative` describing the
+production scenario it's drawn from.
+
+The audit verifies a precise determinism claim :
+
+> Given identical inputs and a versioned kernel execution
+> (VERIFY_VERSION = `v15.5-austere-1`), the kernel produces the
+> same `status`, the same `reasons`, and the same `fingerprint` on
+> every run, on every machine.
+
+This is **not** a claim of determinism across kernel versions, across
+different inputs, or under network failure. The audit script fails
+loudly if any pinned ground truth drifts — that's the entire point.
+
 ## Limits (read first)
 
 - One pair of targets only: **TS ↔ SQL**. No GraphQL, OpenAPI,

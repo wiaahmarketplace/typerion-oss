@@ -12,7 +12,8 @@
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "audit": "./audit/run-audit.sh"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

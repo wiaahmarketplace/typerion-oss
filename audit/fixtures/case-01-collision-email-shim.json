@@ -1,0 +1,35 @@
+{
+  "title": "Legacy email-column shim survives",
+  "narrative": "A multi-year-old codebase added 'emailAddress' as a TS field intending to migrate from 'email' someday. The migration never shipped. The IR annotated the new field's sqlName back to 'email' so existing data wasn't lost. Two TS fields now silently collapse onto one SQL column.",
+  "expected": "fail",
+  "category": "two-fields-one-column",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Customer",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "email", "type": "string" }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Customer",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "email", "type": "string" },
+            { "name": "emailAddress", "type": "string", "sqlName": "email" }
+          ]
+        }
+      ]
+    }
+  }
+}

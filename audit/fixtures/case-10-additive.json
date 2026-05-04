@@ -1,0 +1,27 @@
+{
+  "title": "Empty baseline, candidate adds a clean entity",
+  "narrative": "Reference 'pass' case for greenfield-style additions: the baseline contains no entities, the candidate introduces a new coherent one. The kernel only checks candidate entities for internal cross-projection coherence; pure additions pass.",
+  "expected": "pass",
+  "category": "coherent",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": []
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Invoice",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "amount", "type": "number" },
+            { "name": "issuedAt", "type": "date" }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "title": "Rename mid-flight, old field never removed",
+  "narrative": "During a refactor, 'username' was added with intent to replace 'name' across the codebase. The deprecation PR for 'name' never merged. Both fields are now alive; both project onto SQL column 'name' (the new field was annotated to land in the existing column to preserve writes). The 'transition period' has lasted 18 months.",
+  "expected": "fail",
+  "category": "two-fields-one-column",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "User",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "name", "type": "string" }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "User",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "name", "type": "string" },
+            { "name": "username", "type": "string", "sqlName": "name" }
+          ]
+        }
+      ]
+    }
+  }
+}

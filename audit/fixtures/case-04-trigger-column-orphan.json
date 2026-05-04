@@ -1,0 +1,37 @@
+{
+  "title": "DB-trigger column the application doesn't model",
+  "narrative": "A DBA added 'lastSeenAt' via an out-of-band migration with a trigger that updates it on every UPDATE. The application code was never updated. Six months later, a junior engineer writes a raw SQL query that reads 'lastSeenAt' and TS sees 'undefined' at runtime — but only on the staging tier, where the column exists. The TS interface excludes it (excludeFromTs); the SQL projection includes it.",
+  "expected": "fail",
+  "category": "asymmetric-exclusion",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Session",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "userId", "type": "string" },
+            { "name": "expiresAt", "type": "date" }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Session",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "userId", "type": "string" },
+            { "name": "expiresAt", "type": "date" },
+            { "name": "lastSeenAt", "type": "date", "excludeFromTs": true }
+          ]
+        }
+      ]
+    }
+  }
+}

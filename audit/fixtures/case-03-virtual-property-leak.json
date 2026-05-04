@@ -1,0 +1,35 @@
+{
+  "title": "Virtual property silently writes to nowhere",
+  "narrative": "A developer added 'runningTotal' as a computed field for a paginated cart UI, marked it as TS-only via excludeFromSql. The ORM upsert flow doesn't strip excluded fields when the codegen drifts: every write to order.runningTotal is silently lost. The bug surfaces only when QA notices the running total resets to zero on page refresh.",
+  "expected": "fail",
+  "category": "asymmetric-exclusion",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Order",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "total", "type": "number" }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Order",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "total", "type": "number" },
+            { "name": "runningTotal", "type": "number", "excludeFromSql": true }
+          ]
+        }
+      ]
+    }
+  }
+}

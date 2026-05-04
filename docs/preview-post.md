@@ -2,13 +2,13 @@
 
 Two title options. Pick one before submitting.
 
-## Title — Option A (safe, factual)
+## Title — Option A (safe, factual)  — 70 chars
 
-> Show HN: Detecting cross-target data inconsistencies before they hit production
+> Show HN: Catching TS/SQL drift that compilers and migrations both miss
 
-## Title — Option B (sharper, recommended)
+## Title — Option B (sharper, recommended)  — 62 chars
 
-> Show HN: Your types are correct. Your database is correct. Your system is still broken.
+> Show HN: Types correct. Database correct. System still broken.
 
 ---
 

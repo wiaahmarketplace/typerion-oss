@@ -1,0 +1,35 @@
+{
+  "title": "Coherent entity, no aliasing, no exclusions",
+  "narrative": "Reference 'pass' case: every field projects to the same name in TS and SQL, no overrides, no exclusions, no collisions. The kernel returns status:pass.",
+  "expected": "pass",
+  "category": "coherent",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Customer",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "email", "type": "string" }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Customer",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "email", "type": "string" },
+            { "name": "createdAt", "type": "date" }
+          ]
+        }
+      ]
+    }
+  }
+}

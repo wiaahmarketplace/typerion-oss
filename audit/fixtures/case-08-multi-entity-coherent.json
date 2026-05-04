@@ -1,0 +1,50 @@
+{
+  "title": "Multiple entities, all coherent",
+  "narrative": "Reference 'pass' case for multi-entity IRs. Demonstrates the kernel checks each entity independently and returns pass when none has divergence.",
+  "expected": "pass",
+  "category": "coherent",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Plan",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "name", "type": "string" }
+          ]
+        },
+        {
+          "name": "Membership",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "planId", "type": "string" }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Plan",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "name", "type": "string" },
+            { "name": "priceMonthly", "type": "number" }
+          ]
+        },
+        {
+          "name": "Membership",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "planId", "type": "string" },
+            { "name": "startedAt", "type": "date" }
+          ]
+        }
+      ]
+    }
+  }
+}

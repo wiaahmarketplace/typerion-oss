@@ -1,0 +1,36 @@
+{
+  "title": "SQL column renamed during normalization, TS field never updated",
+  "narrative": "A DB normalization PR renamed 'currentPeriodEnd' to 'current_period_end' across 14 tables to standardize on snake_case. The TS interfaces were never updated. The ORM mapping config was patched to bridge the gap. Six months later, a developer writes a raw SQL migration that joins on the canonical TS field name and discovers production has been silently using the mapped name all along — except for one table that the mapping config missed.",
+  "expected": "fail",
+  "category": "name-divergence",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Subscription",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "userId", "type": "string" },
+            { "name": "currentPeriodEnd", "type": "date" }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Subscription",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "userId", "type": "string" },
+            { "name": "currentPeriodEnd", "type": "date", "sqlName": "current_period_end" }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "title": "i18n field aliased onto canonical field",
+  "narrative": "An i18n addition introduced 'descriptionFr' but aliased its tsName back to 'description' so the existing front-end code wouldn't need an update. The team didn't realize the canonical 'description' field was still alive, projecting to the same TS name. Both fields now collapse onto 'description' in TypeScript: the field that wins at runtime depends on serialization order. The bug surfaces as occasional French descriptions appearing on English pages.",
+  "expected": "fail",
+  "category": "ts-side-collision",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Product",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "description", "type": "string" }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Product",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "description", "type": "string" },
+            { "name": "descriptionFr", "type": "string", "tsName": "description" }
+          ]
+        }
+      ]
+    }
+  }
+}

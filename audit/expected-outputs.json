@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "description": "Pinned ground-truth outputs for each fixture in audit/fixtures/. The audit script re-runs the kernel against each input and asserts (a) status matches, (b) every required reason substring is present, (c) fingerprint matches exactly. Fingerprints are deterministic given identical inputs and a versioned execution (kernel VERIFY_VERSION = v15.5-austere-1).",
+  "kernelVersion": "v15.5-austere-1",
+  "capturedAt": "2026-05-04",
+  "endpoint": "https://typerion-v1-typerion-server-r3wh.vercel.app",
+  "fixtures": {
+    "case-01-collision-email-shim": {
+      "status": "fail",
+      "reasonsCount": 2,
+      "reasonSubstrings": [
+        "field 'emailAddress' projects to TS name 'emailAddress' but SQL name 'email'",
+        "multiple fields collapsing into SQL name 'email'"
+      ],
+      "fingerprint": "902d68a2271b53bbc43e73d049e4cd11"
+    },
+    "case-02-rename-mid-flight": {
+      "status": "fail",
+      "reasonsCount": 2,
+      "reasonSubstrings": [
+        "field 'username' projects to TS name 'username' but SQL name 'name'",
+        "multiple fields collapsing into SQL name 'name'"
+      ],
+      "fingerprint": "9d38eca56f75d7eb00b79d83e95fb463"
+    },
+    "case-03-virtual-property-leak": {
+      "status": "fail",
+      "reasonsCount": 1,
+      "reasonSubstrings": [
+        "field 'runningTotal' is present in TS projection but excluded from SQL"
+      ],
+      "fingerprint": "c46a6cdaa526b515a413f29f84844796"
+    },
+    "case-04-trigger-column-orphan": {
+      "status": "fail",
+      "reasonsCount": 1,
+      "reasonSubstrings": [
+        "field 'lastSeenAt' is present in SQL projection but excluded from TS"
+      ],
+      "fingerprint": "1d1527bb5278f5f4d0008a76de343b57"
+    },
+    "case-05-i18n-alias-collision": {
+      "status": "fail",
+      "reasonsCount": 2,
+      "reasonSubstrings": [
+        "field 'descriptionFr' projects to TS name 'description' but SQL name 'descriptionFr'",
+        "multiple fields collapsing into TS name 'description'"
+      ],
+      "fingerprint": "2c1e19bbda54775fb1d97c5fd267723d"
+    },
+    "case-06-half-done-rename": {
+      "status": "fail",
+      "reasonsCount": 1,
+      "reasonSubstrings": [
+        "field 'currentPeriodEnd' projects to TS name 'currentPeriodEnd' but SQL name 'current_period_end'"
+      ],
+      "fingerprint": "cd3df67f159c5a650acad5d8ba4e859d"
+    },
+    "case-07-clean-camelcase": {
+      "status": "pass",
+      "reasonsCount": 0,
+      "reasonSubstrings": [],
+      "fingerprint": "495985c1bede784398c55924ec62aad6"
+    },
+    "case-08-multi-entity-coherent": {
+      "status": "pass",
+      "reasonsCount": 0,
+      "reasonSubstrings": [],
+      "fingerprint": "0b714999ecbd8890d94bb014a2b239e8"
+    },
+    "case-09-typed-references": {
+      "status": "pass",
+      "reasonsCount": 0,
+      "reasonSubstrings": [],
+      "fingerprint": "31c1cc17edd7d49da29345f93831d462"
+    },
+    "case-10-additive": {
+      "status": "pass",
+      "reasonsCount": 0,
+      "reasonSubstrings": [],
+      "fingerprint": "c0f236a31e1d4d61f7f2929834279db6"
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "title": "Reference types ({ ref: … }) used coherently",
+  "narrative": "Reference 'pass' case demonstrating that ref-typed fields (foreign keys to other entities) are accepted by the kernel when both projections agree.",
+  "expected": "pass",
+  "category": "coherent",
+  "baseline":  {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Customer",
+          "fields": [
+            { "name": "id", "type": "string" }
+          ]
+        },
+        {
+          "name": "Subscription",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "customerId", "type": { "ref": "Customer" } }
+          ]
+        }
+      ]
+    }
+  },
+  "candidate": {
+    "kind": "lossy-inline",
+    "value": {
+      "entities": [
+        {
+          "name": "Customer",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "email", "type": "string" }
+          ]
+        },
+        {
+          "name": "Subscription",
+          "fields": [
+            { "name": "id", "type": "string" },
+            { "name": "customerId", "type": { "ref": "Customer" } },
+            { "name": "status", "type": "string" }
+          ]
+        }
+      ]
+    }
+  }
+}
