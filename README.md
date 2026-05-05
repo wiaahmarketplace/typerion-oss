@@ -233,12 +233,15 @@ are not the ones that crash. They are the ones that look correct.
 
 To anchor the wedge in real code rather than synthetic fixtures,
 we ran Typerion against [Cal.com](https://github.com/calcom/cal.com)
-— an open-source scheduling app, ~30k stars, several years of
-schema history, multiple full-time engineers, TypeScript + Prisma +
-PostgreSQL stack.
+— an open-source scheduling app, actively maintained, several
+years of schema history, TypeScript + Prisma + PostgreSQL.
 
 Reproducible end-to-end via
 [`examples/case-studies/calcom/run-case-study.sh`](examples/case-studies/calcom/).
+
+> Out of 1096 fields across 100 models, Typerion found **1
+> cross-layer inconsistency**. Rare, but real — and not caught by
+> tests or ORM validation.
 
 | Metric                      | Value |
 |-----------------------------|-------|
@@ -247,18 +250,29 @@ Reproducible end-to-end via
 | Cross-projection findings   | 1     |
 
 The single finding : `User.createdDate` (TypeScript field) maps via
-`@map(name: "created")` to the SQL column `created`. Prisma's
-mapping handles the divergence at runtime, every test in the repo
-passes, the application path is correct. But any **raw-SQL query**
-that references `users.createdDate` (analytics, BI tools, custom
-migrations) hits the unbridged surface and fails.
+`@map(name: "created")` to the SQL column `created`. This
+divergence is **benign under Prisma's ORM usage** — the runtime
+translates the field name on every query, every test in the
+repository passes, the application path is correct. But it
+introduces inconsistency between application-level naming and
+database-level representation, which **can lead to errors in
+cross-layer contexts** : raw-SQL queries written against the
+TypeScript field name, custom migrations that reference the field
+from the TS model, analytics or BI dashboards that read directly
+from the database.
 
-Cal.com is one of the most-actively-maintained TS+Prisma OSS apps in
-2026. The base rate on this codebase is 1 latent name divergence per
-~1100 scalar fields (~0.09%). Low, but non-zero — and the affected
-field is a user-creation timestamp typically used in analytics
-queries. Full analysis :
+The base rate on this actively-maintained codebase is roughly 1
+latent name divergence per ~1100 scalar fields (~0.09%). Low, but
+non-zero — and the affected field is a user-creation timestamp
+typically used in analytics queries. Full analysis :
 [`examples/case-studies/calcom/README.md`](examples/case-studies/calcom/README.md).
+
+The thesis this case study supports is narrow : **even in
+disciplined production-grade codebases, cross-projection
+inconsistencies persist that are not modeled by tests or ORM
+validation**. Not a high-frequency pain. A high-uncertainty,
+low-visibility risk. Typerion makes the latent surface
+observable — the value is calibration, not bug-counting.
 
 ## What this is
 

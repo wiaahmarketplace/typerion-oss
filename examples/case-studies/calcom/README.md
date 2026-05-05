@@ -62,24 +62,30 @@ createdDate         DateTime             @default(now()) @map(name: "created")
 
 The TypeScript-side projection of this field is `createdDate`. The
 SQL-side projection (the actual column name in the `users` table)
-is `created`. Both projections are individually valid : Prisma's
-mapping handles the divergence at runtime, every test in the
-repository passes, and a developer using only the Prisma client
-will never see a problem.
+is `created`. Both projections are individually valid.
 
-The latent risk surfaces in the **raw-SQL path** :
+This divergence is **benign under Prisma's ORM usage** : the
+runtime translates the field name on every query, every test in
+the repository passes, and a developer using only the Prisma
+client will never see a problem.
 
-- Any analytics or BI query that joins or filters on
-  `users.createdDate` — written by someone reading the TypeScript
-  type rather than the SQL schema — will fail. The SQL parser
-  will report the column does not exist, and the dashboard /
-  report / pipeline will silently break (or produce wrong
-  numbers, depending on how the calling code handles the error).
+What it introduces is **inconsistency between application-level
+naming and database-level representation**. That can lead to
+errors in cross-layer contexts where the TypeScript-side name is
+referenced against the actual database :
 
-- Any custom migration that references the field name from the
-  TypeScript model rather than from the SQL schema will not apply.
+- Raw-SQL queries written from the TypeScript model (analytics,
+  BI dashboards, custom reports) reference `users.createdDate`
+  while the column is actually named `created`.
+- Custom migrations or ad-hoc data-fix scripts that read the
+  field name from the TypeScript schema rather than the SQL
+  schema may not match real columns.
+- Tooling that introspects the TypeScript types to generate
+  cross-system contracts (OpenAPI specs, GraphQL schemas, data-
+  warehouse mappings) inherits the application-level name and
+  drifts from the database-level name.
 
-This is the *half-done rename* pattern (see
+The pattern matches *half-done rename* (see
 [`audit/fixtures/case-06-half-done-rename.json`](../../../audit/fixtures/case-06-half-done-rename.json))
 in the canonical Typerion fixture set : a SQL column named one
 way, a TypeScript field named another, the ORM bridges the
@@ -88,12 +94,10 @@ the unbridged surface.
 
 ## What this calibrates
 
-Cal.com is one of the most-actively-maintained TypeScript +
-Prisma open-source applications in 2026. The codebase has
-multiple full-time maintainers, a CI pipeline that runs full
-type-checks plus tests, and a reasonably-disciplined schema
-discipline. A senior-engineer review *should* and likely does
-catch most schema drift in normal review.
+Cal.com is an actively-maintained TypeScript + Prisma open-source
+application. The codebase has multiple maintainers, a CI pipeline
+that runs full type-checks plus tests, and reasonably-disciplined
+schema management.
 
 Yet **one latent name-divergence persists in the schema** :
 `User.createdDate ↔ users.created`. The base rate is low — 1 in
@@ -103,21 +107,29 @@ analytics queries.
 
 This is the cost calibration the Typerion thesis predicts :
 
-- The bug class is real (verified at one instance on a
-  high-quality codebase).
+- The bug class is real (verified at one instance on a real
+  codebase, not a synthetic fixture).
 - It survives despite tests, type-checks, and ORM coverage —
   Prisma's `@map` handles the runtime translation, so the
   application path is correct.
-- It surfaces only in raw-SQL contexts that bypass the ORM.
-- It's the kind of bug that *looks correct* — every individual
-  layer is internally consistent, only the cross-projection
-  invariant is broken.
+- It is silent in the ORM-only path and only becomes visible in
+  cross-layer contexts (raw SQL, migrations, analytics queries).
+- It's the kind of inconsistency that *looks correct* — every
+  individual layer is internally consistent, only the cross-
+  projection invariant is broken.
 
 The alternative formulation : *Cal.com's schema is
 **known locally** (each field is correctly defined for its own
 projection) but **not validated globally** (no tool checks
 that the same logical field's TS view and SQL view agree on
 names).*
+
+Single-codebase, single-finding. We don't claim this proves the
+problem is universal or quantifies its prevalence at scale. We
+claim it makes the bug class **observable on real code** rather
+than only on synthetic fixtures. The next step would be running
+the same pipeline against other large Prisma schemas to build a
+base-rate estimate — that's not in this case study.
 
 ## Limits of this case study
 
