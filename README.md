@@ -229,6 +229,37 @@ These bugs are hard to detect because the system remains
 operational while silently diverging. The most expensive bugs
 are not the ones that crash. They are the ones that look correct.
 
+## Case study — Cal.com (real codebase)
+
+To anchor the wedge in real code rather than synthetic fixtures,
+we ran Typerion against [Cal.com](https://github.com/calcom/cal.com)
+— an open-source scheduling app, ~30k stars, several years of
+schema history, multiple full-time engineers, TypeScript + Prisma +
+PostgreSQL stack.
+
+Reproducible end-to-end via
+[`examples/case-studies/calcom/run-case-study.sh`](examples/case-studies/calcom/).
+
+| Metric                      | Value |
+|-----------------------------|-------|
+| Models analyzed             | 100   |
+| Scalar fields analyzed      | 1096  |
+| Cross-projection findings   | 1     |
+
+The single finding : `User.createdDate` (TypeScript field) maps via
+`@map(name: "created")` to the SQL column `created`. Prisma's
+mapping handles the divergence at runtime, every test in the repo
+passes, the application path is correct. But any **raw-SQL query**
+that references `users.createdDate` (analytics, BI tools, custom
+migrations) hits the unbridged surface and fails.
+
+Cal.com is one of the most-actively-maintained TS+Prisma OSS apps in
+2026. The base rate on this codebase is 1 latent name divergence per
+~1100 scalar fields (~0.09%). Low, but non-zero — and the affected
+field is a user-creation timestamp typically used in analytics
+queries. Full analysis :
+[`examples/case-studies/calcom/README.md`](examples/case-studies/calcom/README.md).
+
 ## What this is
 
 A small kernel that takes two intermediate representations
