@@ -1,0 +1,13 @@
+{
+  "_comment": "Step 1 — INTENT. The canonical declaration of what the 'sessions' part of the system should be. Three fields. Both projections (TS interface and SQL table) derive from this.",
+  "entities": [
+    {
+      "name": "Session",
+      "fields": [
+        { "name": "id",        "type": "string" },
+        { "name": "userId",    "type": "string" },
+        { "name": "expiresAt", "type": "date" }
+      ]
+    }
+  ]
+}

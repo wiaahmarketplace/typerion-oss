@@ -1,0 +1,13 @@
+{
+  "_comment": "Step 2 — GENERATED. The system as it currently exists in the code + database. In a fully integrated Typerion deployment this is what the projection engine would emit from the intent. Here it's hand-aligned to match the intent. Typerion verify(intent, generated) returns 'pass' — every projection of every field matches across layers.",
+  "entities": [
+    {
+      "name": "Session",
+      "fields": [
+        { "name": "id",        "type": "string" },
+        { "name": "userId",    "type": "string" },
+        { "name": "expiresAt", "type": "date" }
+      ]
+    }
+  ]
+}

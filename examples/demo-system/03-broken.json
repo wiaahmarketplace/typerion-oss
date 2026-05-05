@@ -1,0 +1,14 @@
+{
+  "_comment": "Step 3 — BROKEN. A DBA on a previous team adds a 'last_seen_at' column to the sessions table via an out-of-band migration with a trigger that auto-updates it on every UPDATE. The application code is never touched. The column lives in the database (SQL projection), but it does not appear in the TypeScript interface (TS projection excluded). The intent file was never updated to include this field. The TS compiler is happy. The migration ran. The trigger works. Each layer is internally correct. The system as a whole is silently inconsistent.",
+  "entities": [
+    {
+      "name": "Session",
+      "fields": [
+        { "name": "id",          "type": "string" },
+        { "name": "userId",      "type": "string" },
+        { "name": "expiresAt",   "type": "date" },
+        { "name": "lastSeenAt",  "type": "date", "excludeFromTs": true }
+      ]
+    }
+  ]
+}

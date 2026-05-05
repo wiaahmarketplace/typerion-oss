@@ -135,7 +135,25 @@ publicly to validate the underlying primitive on real code.
 | **Explain** — trace each divergence to its source line | Human-readable reasons strings + fingerprint | Provenance to exact source line + signed decision log |
 | **Block** — fail CI when uncontrolled drift would reach production | `typerion verify` exit code (CI-usable) | Integrated PR-gate hook + drift reconciliation suggestions |
 
-### Try it now
+### Run the 4-step demo (30 seconds, end-to-end)
+
+The cleanest entry point. Walks through intent → generated →
+broken → caught, on a small Session entity, with a real
+production-pattern drift introduced. Shows the control plane
+observing, explaining, and blocking in CI.
+
+```bash
+git clone https://github.com/wiaahmarketplace/typerion-oss
+cd typerion-oss
+./examples/demo-system/run-demo.sh
+```
+
+Reproducible. Deterministic fingerprint. Exits with code 1 on
+caught drift — wire it into CI as-is. See
+[`examples/demo-system/`](examples/demo-system/) for the four
+input files and the walkthrough.
+
+### Try it now (raw API)
 
 ```bash
 export TYPERION_TOKEN=pat_typerion_preview_demo_2026_05
