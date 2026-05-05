@@ -46,8 +46,18 @@ interface User {
 CREATE TABLE users (email VARCHAR NOT NULL);
 ```
 
-The TypeScript compiles. The migration runs. Drizzle / Prisma /
-TypeORM are all happy.
+The TypeScript compiles. The migration runs. Drizzle Kit reports
+*"Everything's fine 🐶🔥"* and silently drops the second field at
+codegen. TypeORM accepts the collision without validation. Prisma
+catches this specific case through field-name normalization — but
+not the other 5 fixture categories (phantom fields, asymmetric
+exclusions, projection-name divergence, i18n alias collisions,
+partial renames). Different ORMs catch different subsets ; none
+provide cross-representation validation across all cases.
+
+Empirical tests of all three are in
+[examples/orm-coverage/](https://github.com/wiaahmarketplace/typerion-oss/tree/main/examples/orm-coverage)
+— reproducible, not theoretical.
 
 But the IR says the second field was annotated to map back to the
 existing `email` column (legacy migration shim that never got

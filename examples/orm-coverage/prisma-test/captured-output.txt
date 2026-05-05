@@ -1,0 +1,37 @@
+Captured output of `prisma validate` on the schema in this directory.
+Reproducible : `npx prisma@<version> validate --schema=schema.prisma`.
+
+Verified across Prisma 4.16.2, 5.22.0, 6.16.1, 7.8.0 — all return
+identical P1012 error.
+
+================================================================
+$ npx prisma@latest validate --schema=schema.prisma
+
+Prisma schema loaded from schema.prisma.
+
+Error: Prisma schema validation - (validate wasm)
+Error code: P1012
+error: Field "emailAddress" is already defined on model "User".
+  -->  schema.prisma:13
+   |
+12 |   email        String
+13 |   emailAddress String @map("email")
+14 | }
+   |
+
+Validation Error Count: 1
+[Context: validate]
+
+Prisma CLI Version : 7.8.0
+================================================================
+
+Verdict : Prisma catches this case at static-validation time. The
+duplicate column name is detected via field-name normalization
+during schema validation.
+
+To reproduce :
+  cd prisma-test/
+  DATABASE_URL=postgresql://test npx prisma@latest validate
+
+You will see the same P1012 error regardless of whether the database
+is reachable — the validation happens entirely on the schema text.

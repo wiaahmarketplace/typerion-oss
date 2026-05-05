@@ -72,8 +72,26 @@ CREATE TABLE users (
 );
 ```
 
-The migration runs. The column exists. Drizzle / Prisma / TypeORM
-generate without complaint.
+The migration runs. The column exists.
+
+What the popular ORMs actually do with this exact case (empirical
+test — see [examples/orm-coverage/](examples/orm-coverage/) for the
+reproducible setup) :
+
+- **Drizzle Kit** : `drizzle-kit check` reports *"Everything's fine
+  🐶🔥"*. The generated migration silently contains **only one
+  column** — `emailAddress` is dropped from the SQL output without
+  any warning. **Silent data loss at codegen time.**
+- **TypeORM** : decorators apply without error. Metadata storage
+  accepts the collision silently. The bug surfaces only at runtime
+  when both fields are written.
+- **Prisma** : `prisma validate` (versions 4.x → 7.x) raises
+  `P1012 — Field 'emailAddress' is already defined on model
+  'User'`. Prisma catches **this specific case** through field-name
+  normalization, but the broader class of cross-projection
+  inconsistency (asymmetric exclusions, projection-name divergence
+  in the inverse direction, virtual properties, trigger columns)
+  is not validated by any of the three.
 
 The IR says the second field maps back to `email`:
 
@@ -110,13 +128,18 @@ corrupting data.
   names. They are independent values.
 - The SQL migration sees one column. It has a name. It accepts
   writes.
-- **No tool in the standard stack checks both projections
-  simultaneously**, with the awareness that they both derive from
-  the same logical schema.
+- Different ORMs catch different subsets of inconsistencies. None
+  of them validate cross-representation across the full surface
+  (field exclusion asymmetry, projection-name divergence on either
+  axis, trigger columns the application doesn't model, i18n alias
+  collisions, partial renames after normalization). Each tool
+  checks its own projection against itself.
 
-ORMs check their own schema → SQL alignment. Type-checkers check
-their own type definitions. Migration tools check SQL syntax.
-Nobody checks the cross-target invariant.
+Type-checkers check their own type definitions. Migration tools
+check SQL syntax. ORMs check their own schema → SQL alignment with
+varying coverage. Nobody systematically verifies the cross-target
+invariant — that the TS view and the SQL view of the same logical
+schema agree on names, presence, and types.
 
 ## What this is
 

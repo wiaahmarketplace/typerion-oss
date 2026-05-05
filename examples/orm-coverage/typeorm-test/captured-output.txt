@@ -1,0 +1,37 @@
+Captured output of `npx tsx inspect.ts` on the entity in this
+directory.
+
+Reproducible :
+  npm install
+  npx tsx inspect.ts
+
+Verified 2026-05-05 with typeorm 0.3.21.
+
+================================================================
+$ npx tsx inspect.ts
+
+=== Decorator-level column metadata for User ===
+  propertyName="id" | options.name="(none)" | effective DB name="id"
+  propertyName="email" | options.name="(none)" | effective DB name="email"
+  propertyName="emailAddress" | options.name="email" | effective DB name="email"
+
+=== Collision check ===
+  ⚠️ COLLISION on column "email" : TS fields [email, emailAddress]
+
+=== TypeORM verdict ===
+  Decorators applied successfully (no exception thrown).
+  Metadata storage accepts collision silently.
+  TypeORM does NOT validate at decorator/metadata level.
+  The collision would only surface at runtime if/when both fields are written.
+================================================================
+
+The decorators on `email` and `emailAddress` (with `name: "email"`)
+both register successfully in TypeORM's metadata storage. There is
+no validation step that detects the duplicate effective database
+name.
+
+A `synchronize: true` operation against a real database would emit
+two separate column-creation operations targeting the same column
+name, with the second overwriting the first or producing a database
+error depending on the driver. Either way, no static check warns
+the developer at decorator-application time.

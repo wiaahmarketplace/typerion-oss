@@ -1,0 +1,48 @@
+Captured output of `drizzle-kit check` and `drizzle-kit generate`
+on the schema in this directory.
+
+Reproducible :
+  npm install
+  npx drizzle-kit check
+  npx drizzle-kit generate
+
+Verified 2026-05-05.
+
+================================================================
+$ npx drizzle-kit check
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/path/to/drizzle.config.ts'
+Everything's fine 🐶🔥
+================================================================
+$ npx drizzle-kit generate
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/path/to/drizzle.config.ts'
+1 tables
+user 2 columns 0 indexes 0 fks
+
+[✓] Your SQL migration file ➜ drizzle/0000_<random_name>.sql 🚀
+================================================================
+
+Generated migration file content :
+
+  CREATE TABLE "user" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"email" varchar(255) NOT NULL
+  );
+
+================================================================
+
+Note that the schema in TypeScript declared THREE fields (id,
+email, emailAddress) but the generated SQL contains only TWO
+columns. The `emailAddress` field is silently absent from the
+migration output.
+
+This is the failure mode the canonical Typerion case-01 fixture
+describes : two TypeScript fields whose SQL projection collapses
+onto one column. Drizzle does not warn ; the second field is
+simply not present in the generated database schema.
+
+A runtime write to `user.emailAddress` would attempt to write to
+a column that the migration never created.

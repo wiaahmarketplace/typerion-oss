@@ -1,0 +1,29 @@
+// Canonical Typerion case-01 translated to a Prisma schema.
+//
+// Two TypeScript fields :
+//   - `email` (default mapping → SQL column "email")
+//   - `emailAddress` mapped via @map("email") → also SQL column "email"
+//
+// Expected behavior (verified 2026-05-05 across Prisma 4.16, 5.22, 6.16, 7.8) :
+//   `prisma validate` raises P1012 :
+//     Field "emailAddress" is already defined on model "User".
+//
+// Prisma catches this specific case through field-name normalization.
+// It does NOT validate the other Typerion fixture categories
+// (phantom-ts, phantom-sql, projection-name divergence, i18n alias
+// collision on the inverse axis, partial rename after normalization).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  email        String
+  emailAddress String @map("email")
+}

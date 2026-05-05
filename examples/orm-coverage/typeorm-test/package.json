@@ -1,0 +1,16 @@
+{
+  "name": "typerion-orm-coverage-typeorm-test",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "inspect": "tsx inspect.ts"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.21"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}
