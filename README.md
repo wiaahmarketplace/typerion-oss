@@ -20,8 +20,8 @@ curl -s -X POST https://typerion-v1-typerion-server-r3wh.vercel.app/v1/verify \
   -H "Content-Type: application/json" \
   -d @- <<'JSON' | jq
 {
-  "baseline":  {"kind":"lossy-inline","value":{"entities":[{"name":"User","fields":[{"name":"email","type":"string"}]}]}},
-  "candidate": {"kind":"lossy-inline","value":{"entities":[{"name":"User","fields":[{"name":"email","type":"string"},{"name":"emailAddress","type":"string","sqlName":"email"}]}]}}
+  "baseline":  {"kind":"lossy-inline","value":{"entities":[{"name":"Session","fields":[{"name":"id","type":"string"},{"name":"userId","type":"string"},{"name":"expiresAt","type":"date"}]}]}},
+  "candidate": {"kind":"lossy-inline","value":{"entities":[{"name":"Session","fields":[{"name":"id","type":"string"},{"name":"userId","type":"string"},{"name":"expiresAt","type":"date"},{"name":"lastSeenAt","type":"date","excludeFromTs":true}]}]}}
 }
 JSON
 ```
@@ -32,10 +32,9 @@ Expected output :
 {
   "status": "fail",
   "reasons": [
-    "Entity 'User' field 'emailAddress' projects to TS name 'emailAddress' but SQL name 'email' — runtime writes to TS field 'emailAddress' will not reach SQL column 'email'.",
-    "Entity 'User' has multiple fields collapsing into SQL name 'email' (logical fields: 'email', 'emailAddress') — only one survives at runtime, causing silent data loss."
+    "Entity 'Session' field 'lastSeenAt' is present in SQL projection but excluded from TS — TS code cannot read or write this column, leading to silent NULLs or write failures."
   ],
-  "fingerprint": "578f09fce81c380cb2abb303a0d253a8"
+  "fingerprint": "1d1527bb5278f5f4d0008a76de343b57"
 }
 ```
 
@@ -47,93 +46,110 @@ generate. Read on for the why.
 > this demo instance only — rate-limited and isolated. Real auth
 > isn't the focus of this preview ; the kernel decision is.
 
-> **TL;DR of the case below** : the TS compiler says OK. The SQL
-> migration runs OK. **Individually valid, collectively
-> inconsistent.** Nothing in the standard stack checks the
-> cross-projection invariant.
+> **TL;DR of the case below** : a DB column exists in the database
+> but isn't modeled by the application code. The migration ran. The
+> TS interface compiles. Both projections of the same logical schema
+> are valid in isolation — but **collectively inconsistent**, and
+> no ORM can catch this case because the bug lives **outside** the
+> ORM's view of the schema.
 
 ---
 
-## The case
+## The case — a DB-trigger column the application doesn't model
+
+A DBA on a previous team added a `last_seen_at` column to the
+`sessions` table via an out-of-band migration with a trigger that
+auto-updates it on every UPDATE. The application code was never
+touched. The column lives in the database, populated by the trigger,
+but it doesn't appear in the TypeScript interface.
+
+Six months later, a junior engineer writes a raw SQL query that
+joins `sessions.last_seen_at` and the result lands in a TS variable
+typed as something the column doesn't actually carry. On staging
+the column exists ; on the dev tier it doesn't ; the bug surfaces
+intermittently, weeks after merge.
+
+```sql
+ALTER TABLE sessions
+  ADD COLUMN last_seen_at TIMESTAMP DEFAULT now();
+CREATE TRIGGER session_touch BEFORE UPDATE ON sessions
+  FOR EACH ROW EXECUTE FUNCTION touch_last_seen();
+```
 
 ```ts
-interface User {
-  email: string;
-  emailAddress: string;
+interface Session {
+  id: string;
+  userId: string;
+  expiresAt: Date;
+  // lastSeenAt — never declared in TypeScript
 }
 ```
 
-Both fields type-check. Both are non-null strings. Every TS
-type-checker on earth approves.
+The migration ran. The trigger works. Every TS type-checker on
+earth approves the interface. Each tool checks its own projection
+against itself.
 
-```sql
-CREATE TABLE users (
-  email VARCHAR NOT NULL
-);
-```
-
-The migration runs. The column exists.
-
-What the popular ORMs actually do with this exact case (empirical
-test — see [examples/orm-coverage/](examples/orm-coverage/) for the
-reproducible setup) :
-
-- **Drizzle Kit** : `drizzle-kit check` reports *"Everything's fine
-  🐶🔥"*. The generated migration silently contains **only one
-  column** — `emailAddress` is dropped from the SQL output without
-  any warning. **Silent data loss at codegen time.**
-- **TypeORM** : decorators apply without error. Metadata storage
-  accepts the collision silently. The bug surfaces only at runtime
-  when both fields are written.
-- **Prisma** : `prisma validate` (versions 4.x → 7.x) raises
-  `P1012 — Field 'emailAddress' is already defined on model
-  'User'`. Prisma catches **this specific case** through field-name
-  normalization, but the broader class of cross-projection
-  inconsistency (asymmetric exclusions, projection-name divergence
-  in the inverse direction, virtual properties, trigger columns)
-  is not validated by any of the three.
-
-The IR says the second field maps back to `email`:
+The IR for the candidate state explicitly marks the field as
+SQL-only :
 
 ```json
 {
-  "name": "emailAddress",
-  "type": "string",
-  "sqlName": "email"
+  "name": "lastSeenAt",
+  "type": "date",
+  "excludeFromTs": true
 }
 ```
 
-(A legacy migration shim that survived. It happens.)
-
-**Output of `typerion verify` against this candidate:**
+**Output of `typerion verify` against this candidate :**
 
 ```json
 {
   "status": "fail",
   "reasons": [
-    "Entity 'User' field 'emailAddress' projects to TS name 'emailAddress' but SQL name 'email' — runtime writes to TS field 'emailAddress' will not reach SQL column 'email'.",
-    "Entity 'User' has multiple fields collapsing into SQL name 'email' (logical fields: 'email', 'emailAddress') — only one survives at runtime, causing silent data loss."
+    "Entity 'Session' field 'lastSeenAt' is present in SQL projection but excluded from TS — TS code cannot read or write this column, leading to silent NULLs or write failures."
   ]
 }
 ```
 
-Two TS fields collapse onto one SQL column. At runtime, writes to
-`user.emailAddress` overwrite `user.email`. The TypeScript compiler
-saw nothing wrong. The migration ran clean. The system is silently
-corrupting data.
+This case is **structurally out of every ORM's scope** by design.
+Prisma / Drizzle / TypeORM all assume the schema is owned by the
+ORM. A column that lives in the database but isn't part of the ORM
+model is not a bug they can catch — it's a category they don't
+model. Yet at the application level it's a real source of runtime
+divergence : raw SQL queries pull a value the ORM doesn't know
+exists, and the type system has no opinion.
 
-## Why this happens
+## Other patterns the same primitive catches
 
-- TypeScript sees two fields in the interface. They have distinct
+The audit fixtures in [`audit/fixtures/`](audit/fixtures/) cover
+five additional production-realistic cases. Each carries a short
+`narrative` field describing the scenario it's drawn from :
+
+| # | Pattern                       | Production scenario                                              |
+|---|-------------------------------|------------------------------------------------------------------|
+| 03 | virtual-property leak (TS-only) | Computed field marked TS-only, ORM upsert flow writes anyway   |
+| 04 | trigger-column orphan (SQL-only) | The case above — DB-trigger column the app doesn't model      |
+| 05 | i18n alias collision (TS-side) | `descriptionFr` aliased to `description`, two fields collapse  |
+| 06 | half-done rename (name divergence) | SQL normalization renamed `currentPeriodEnd` → `current_period_end`, TS field never updated |
+| 01 | legacy email-shim collapse     | Two TS fields land on one SQL column — *Prisma catches this specific case (`P1012`), Drizzle silently drops the field, TypeORM accepts it* |
+| 02 | mid-flight rename collapse     | Same shape as 01 — ongoing deprecation that never finished       |
+
+The empirical ORM coverage test for case 01 is in
+[`examples/orm-coverage/`](examples/orm-coverage/) — reproducible,
+each output captured.
+
+## Why no existing tool catches this
+
+- TypeScript sees the fields in the interface. They have distinct
   names. They are independent values.
-- The SQL migration sees one column. It has a name. It accepts
-  writes.
-- Different ORMs catch different subsets of inconsistencies. None
-  of them validate cross-representation across the full surface
-  (field exclusion asymmetry, projection-name divergence on either
-  axis, trigger columns the application doesn't model, i18n alias
-  collisions, partial renames after normalization). Each tool
-  checks its own projection against itself.
+- The SQL migration sees the columns. They have names. They accept
+  writes. They may even have triggers.
+- Different ORMs catch different subsets of inconsistencies, but
+  the broader class — field exclusion asymmetry, projection-name
+  divergence on either axis, trigger columns the application
+  doesn't model, i18n alias collisions, partial renames after
+  normalization — is **not** validated by any of them. They each
+  check their own projection against itself.
 
 Type-checkers check their own type definitions. Migration tools
 check SQL syntax. ORMs check their own schema → SQL alignment with
@@ -216,6 +232,18 @@ loudly if any pinned ground truth drifts — that's the entire point.
   RBAC, RLS in this preview.
 - The IR shape (`SimpleIR`) is a deliberate subset, not the
   production form.
+- **No extractors yet.** The IR has to be hand-written. That makes
+  this preview a verification of the kernel decision logic, not a
+  ready-to-run tool against your real codebase. Extractors for
+  Prisma / TypeORM / Drizzle / raw SQL are the most-requested next
+  step ; they're not in this preview.
+- **Hosted-API trust.** The kernel decision logic is private and
+  served from a hosted endpoint. Senior engineers reviewing
+  production schemas have rightly flagged that no real codebase
+  should be sent to a closed-source hosted API ; a local CLI mode
+  that runs the kernel binary on your machine is the right answer.
+  It's not in this preview either. **For now, only test with the
+  bundled fixtures or hand-written IRs.**
 - Server is private. The kernel logic that makes the verify
   decision is not open. Only the CLI surface and the public IR
   shape are MIT-licensed in this repo.

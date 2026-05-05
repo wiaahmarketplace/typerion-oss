@@ -27,70 +27,75 @@ curl -s -X POST https://typerion-v1-typerion-server-r3wh.vercel.app/v1/verify \
   -H "Content-Type: application/json" \
   -d @- <<'JSON' | jq
 {
-  "baseline":  {"kind":"lossy-inline","value":{"entities":[{"name":"User","fields":[{"name":"email","type":"string"}]}]}},
-  "candidate": {"kind":"lossy-inline","value":{"entities":[{"name":"User","fields":[{"name":"email","type":"string"},{"name":"emailAddress","type":"string","sqlName":"email"}]}]}}
+  "baseline":  {"kind":"lossy-inline","value":{"entities":[{"name":"Session","fields":[{"name":"id","type":"string"},{"name":"userId","type":"string"},{"name":"expiresAt","type":"date"}]}]}},
+  "candidate": {"kind":"lossy-inline","value":{"entities":[{"name":"Session","fields":[{"name":"id","type":"string"},{"name":"userId","type":"string"},{"name":"expiresAt","type":"date"},{"name":"lastSeenAt","type":"date","excludeFromTs":true}]}]}}
 }
 JSON
 ```
 
-The case:
+The case — a DB-trigger column the application doesn't model :
+
+```sql
+ALTER TABLE sessions
+  ADD COLUMN last_seen_at TIMESTAMP DEFAULT now();
+CREATE TRIGGER session_touch BEFORE UPDATE ON sessions
+  FOR EACH ROW EXECUTE FUNCTION touch_last_seen();
+```
 
 ```ts
-interface User {
-  email: string;
-  emailAddress: string;
+interface Session {
+  id: string;
+  userId: string;
+  expiresAt: Date;
+  // lastSeenAt — never declared in TypeScript
 }
 ```
 
-```sql
-CREATE TABLE users (email VARCHAR NOT NULL);
-```
+A DBA on a previous team added the column via an out-of-band
+migration with a trigger. The application code was never updated.
+The migration ran. The trigger works. Every TS type-checker on
+earth approves the interface. Every ORM (Prisma / Drizzle /
+TypeORM) is structurally **unable** to catch this, because the
+column isn't part of the ORM's view of the schema — it's a
+category they don't model.
 
-The TypeScript compiles. The migration runs. Drizzle Kit reports
-*"Everything's fine 🐶🔥"* and silently drops the second field at
-codegen. TypeORM accepts the collision without validation. Prisma
-catches this specific case through field-name normalization — but
-not the other 5 fixture categories (phantom fields, asymmetric
-exclusions, projection-name divergence, i18n alias collisions,
-partial renames). Different ORMs catch different subsets ; none
-provide cross-representation validation across all cases.
-
-Empirical tests of all three are in
-[examples/orm-coverage/](https://github.com/wiaahmarketplace/typerion-oss/tree/main/examples/orm-coverage)
-— reproducible, not theoretical.
-
-But the IR says the second field was annotated to map back to the
-existing `email` column (legacy migration shim that never got
-removed):
-
-```json
-{ "name": "emailAddress", "type": "string", "sqlName": "email" }
-```
-
-Two TS fields silently collapse onto one SQL column. At runtime, a
-write to `user.emailAddress` overwrites `user.email`.
+Six months later, a junior writes a raw SQL query that reads
+`sessions.last_seen_at` and the result lands in a TS variable
+typed as something the column doesn't actually carry. On staging
+the column exists ; on dev it doesn't ; the bug surfaces
+intermittently, weeks after merge.
 
 The framing that matters : **individually valid, collectively
-inconsistent**. The TypeScript compiler runs and says OK. The SQL
-migration runs and says OK. Each tool checks its own projection
-against itself. Nothing in the standard stack checks the
-cross-projection invariant.
+inconsistent**. The TS interface is valid. The SQL migration is
+valid. Each tool checks its own projection against itself. Nothing
+in the standard stack checks the cross-projection invariant.
 
 I built a small kernel that takes a baseline IR and a candidate IR
 and verifies the candidate's TS projection agrees with its SQL
 projection on names, presence, and types. The output for the case
-above:
+above :
 
 ```
 status: fail
 reasons:
-  - Entity 'User' field 'emailAddress' projects to TS name 'emailAddress'
-    but SQL name 'email' — runtime writes to TS field 'emailAddress'
-    will not reach SQL column 'email'.
-  - Entity 'User' has multiple fields collapsing into SQL name 'email'
-    (logical fields: 'email', 'emailAddress') — only one survives at
-    runtime, causing silent data loss.
+  - Entity 'Session' field 'lastSeenAt' is present in SQL projection
+    but excluded from TS — TS code cannot read or write this column,
+    leading to silent NULLs or write failures.
 ```
+
+That's one of six failure modes the audit fixtures cover. Five
+others — virtual-property leak (TS-only), i18n alias collision
+(TS-side), partial rename (`currentPeriodEnd ↔ current_period_end`),
+legacy field-collision after migration shim, mid-flight rename —
+are in [audit/fixtures/](https://github.com/wiaahmarketplace/typerion-oss/tree/main/audit/fixtures)
+with narratives describing the production scenario each one is
+drawn from.
+
+Empirical tests of how Prisma / Drizzle / TypeORM handle the
+collision case are in [examples/orm-coverage/](https://github.com/wiaahmarketplace/typerion-oss/tree/main/examples/orm-coverage)
+— Prisma catches it (`P1012`), Drizzle silently drops the field,
+TypeORM accepts it. None of the three catch the other five
+fixtures.
 
 That's it. One check, one pair of targets.
 
@@ -98,6 +103,14 @@ Limits, up front:
 
 - TS ↔ SQL only. No GraphQL / OpenAPI / RBAC / RLS in this preview.
 - The IR shape is a deliberate subset.
+- **No extractors.** The IR has to be hand-written. That makes
+  this preview a verification of the kernel decision logic, not
+  a tool you can run against your real codebase yet.
+- **Hosted-API only.** The kernel runs on a closed-source hosted
+  endpoint. Senior engineers reviewing real schemas should not
+  send production code to this preview — only test with the
+  bundled fixtures or hand-written IRs. A local CLI mode is
+  the most-requested next step.
 - The kernel server is private. CLI and public IR types are MIT in
   the public repo; the verify logic itself isn't.
 - No SLO, no guarantees. This is a preview, not a product.
