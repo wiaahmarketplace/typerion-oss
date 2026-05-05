@@ -99,6 +99,27 @@ fixtures.
 
 That's it. One check, one pair of targets.
 
+Why this class of bug is hard to detect, even though it's "known" :
+
+  - invisible : no crash, plausible values, app continues to run
+  - delayed : surfaces weeks or months after the merge
+  - distributed : API says A, DB does B, code assumes C — each
+    layer is internally correct, the system is broken
+  - test-blind : "the test catches it" only holds if the test
+    verifies actual database state, not the response object that
+    the ORM returns
+
+Schema drift is a well-documented problem. In one published
+audit, 23 of 47 endpoints had structural drift while the test
+suite reported 100% passing for six months. In another reported
+incident, a simple type change (number → string on user_id)
+passed every test and broke roughly 30% of mobile users in
+production. (Source : *Your API Tests Are Lying to You*, DEV.to.)
+
+These bugs are hard to detect because the system remains
+operational while silently diverging. The most expensive bugs
+are not the ones that crash — they are the ones that look correct.
+
 Limits, up front:
 
 - TS ↔ SQL only. No GraphQL / OpenAPI / RBAC / RLS in this preview.

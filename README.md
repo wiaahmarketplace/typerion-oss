@@ -177,6 +177,58 @@ varying coverage. Nobody systematically verifies the cross-target
 invariant — that the TS view and the SQL view of the same logical
 schema agree on names, presence, and types.
 
+## What the industry already documents (and what it doesn't)
+
+The community has named **five patterns of schema drift** that
+break production :
+
+- **Type Shift** — a field silently changes type (`number` → `string`)
+- **Silent Disappearance** — a field vanishes from the serializer
+- **Nullable Surprise** — a non-null assumption fails on a null value
+- **Structural Reshape** — `response.x` moves to `response.data.x`
+- **Phantom Addition** — a field appears unintentionally (e.g. unmasked SSN)
+
+(Source : *Anatomy of a Schema Drift Incident — 5 Real Patterns That
+Break Production*, DEV.to / QA Leaders, March 2026.)
+
+The Typerion audit fixtures cover **four additional failure modes**
+that are not categorized in mainstream drift literature :
+
+| Pattern                              | Why no existing tool catches it                                       |
+|--------------------------------------|------------------------------------------------------------------------|
+| TS-only virtual property leak (case-03) | ORM upsert flow returns the written object, masking the write failure |
+| SQL-only trigger column orphan (case-04) | The column lives outside the ORM's view of the schema                |
+| Half-done rename (case-06)              | ORM mapping config bridges the divergence ; raw SQL queries break    |
+| Mapping-shim collision (case-01)        | Two TS fields collapse onto one SQL column ; only Prisma catches this specific shape |
+
+The unifying property : these bugs are **known locally** (every
+senior dev has seen one) but **not mastered globally** (no tool
+validates the cross-target invariant). They share four
+characteristics that make them hard to detect :
+
+- **Invisible** — no crash, plausible values, the app continues to run
+- **Delayed** — surface weeks or months after the merge that
+  introduced them, typically after a partial migration
+- **Distributed** — the API says A, the DB does B, the code assumes C ;
+  each layer is internally correct, the system as a whole is broken
+- **Test-blind** — *"the test will catch it"* only holds if the test
+  verifies actual database state, not the response object that the
+  ORM returns. Many ORMs return the input on write failures, so the
+  test passes while the database is already corrupted.
+
+Schema drift is a well-documented problem in production systems.
+In one published audit, **23 of 47 endpoints had structural drift
+while the test suite reported 100% passing for six months
+straight**. In another reported incident, a simple type change
+(`number` → `string` on `user_id` after a routine migration)
+passed every test and broke roughly **30% of mobile users in
+production**. (Source : *Your API Tests Are Lying to You — The
+Schema Drift Problem Nobody Talks About*, DEV.to.)
+
+These bugs are hard to detect because the system remains
+operational while silently diverging. The most expensive bugs
+are not the ones that crash. They are the ones that look correct.
+
 ## What this is
 
 A small kernel that takes two intermediate representations
