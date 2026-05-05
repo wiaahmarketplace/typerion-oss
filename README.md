@@ -42,6 +42,26 @@ The hosted endpoint is rate-limited (30 req/min) and disposable —
 torn down when the preview window closes. No signup, no API key to
 generate. Read on for the why.
 
+### Or via the CLI (less typing)
+
+```bash
+git clone https://github.com/wiaahmarketplace/typerion-oss
+cd typerion-oss && pnpm install
+pnpm --filter @typerion/cli build
+
+node packages/cli/bin/typerion.mjs verify \
+  ./audit/fixtures/case-04-trigger-column-orphan.json
+```
+
+Same result as the curl above, with one less layer of JSON to
+compose. Exit code reflects the verdict (`0` = pass, `1` = fail,
+`2` = uncertain) — usable in CI scripts. **The CLI is a thin
+wrapper around the hosted kernel — the kernel still runs
+server-side. A local-mode CLI with the kernel binary on your
+machine is the most-requested next step ; not in this preview.
+Do not send production schema data — only fixtures or
+hand-written IRs.**
+
 > **Note on the shared `pat_typerion_preview_demo_2026_05`** : it's a public token for
 > this demo instance only — rate-limited and isolated. Real auth
 > isn't the focus of this preview ; the kernel decision is.

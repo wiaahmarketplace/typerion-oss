@@ -1,34 +1,43 @@
 /**
  * @typerion/cli — entry point.
  *
- * Phase 3 scope (typerion-oss minimal): one command, `init`. The rest
- * of the surface (parse, dev, generate, verify, build, enforce) lands
- * after Phase 4 — once the upstream private repo is locked down.
+ * Preview scope :
+ *   init     scaffold a new Typerion project (local)
+ *   verify   verify an IR pair against the kernel (thin wrapper
+ *            around the hosted endpoint — kernel still runs
+ *            server-side ; local-mode CLI with the kernel binary
+ *            on your machine is the most-requested next step
+ *            and not in this preview)
  *
- * Decisions about a system live server-side. The CLI is the door.
+ * The rest of the surface (build, enforce, deploy-check) lands
+ * post-preview.
  */
 
 import { runInit } from "./commands/init.js";
+import { runVerify } from "./commands/verify.js";
 
 const PACKAGE_VERSION = "0.0.1";
 
-const HELP = `typerion ${PACKAGE_VERSION} — control plane for software in the age of AI
+const HELP = `typerion ${PACKAGE_VERSION} — cross-target coherence verifier
 
 Usage:
   typerion <command> [options]
 
 Available commands:
-  init <dir>      Scaffold a new Typerion project in <dir>
-  help            Show this message
-  version         Print the CLI version
+  init <dir>           Scaffold a new Typerion project in <dir>
+  verify <file.json>   Verify an IR pair against the kernel
+  help                 Show this message
+  version              Print the CLI version
 
-Server-bound commands (coming with the server release):
-  verify          Is this change safe to ship?
-  build           Generate every coherent target from one source
+Server-bound commands (coming up):
+  build           Generate coherent targets from one source
   enforce         Apply policy at runtime
   deploy-check    Block unsafe merges at PR time
 
-Run \`typerion init my-app\` to start. Decisions live on the server.
+Quick try :
+  typerion verify ./audit/fixtures/case-04-trigger-column-orphan.json
+
+Decisions live on the kernel ; the CLI is the door.
 `;
 
 export async function run(argv: readonly string[]): Promise<number> {
@@ -48,11 +57,13 @@ export async function run(argv: readonly string[]): Promise<number> {
     return runInit(rest);
   }
 
+  if (command === "verify") {
+    return runVerify(rest);
+  }
+
   // Forward-stub for upcoming server-bound commands. They print a
-  // helpful message rather than an obscure "unknown command" error,
-  // so a user discovering the surface understands what's coming.
+  // helpful message rather than an obscure "unknown command" error.
   const SERVER_COMMANDS: ReadonlySet<string> = new Set([
-    "verify",
     "build",
     "enforce",
     "deploy-check",
@@ -62,7 +73,7 @@ export async function run(argv: readonly string[]): Promise<number> {
   ]);
   if (SERVER_COMMANDS.has(command)) {
     process.stderr.write(
-      `typerion: \`${command}\` runs on the Typerion server. Server release coming up.\n` +
+      `typerion: \`${command}\` lands post-preview. Server release in progress.\n` +
         `For updates: https://typerion.dev\n`,
     );
     return 2;
