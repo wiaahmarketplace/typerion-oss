@@ -5,14 +5,17 @@ Reproducible run of Typerion against [Cal.com](https://github.com/calcom/cal.com
 years of schema history, TypeScript + Prisma + PostgreSQL stack.
 
 > **What this case study proves** : the Typerion thesis on a real
-> production codebase, not a synthetic fixture. *Software systems
-> don't fail because code is wrong. They fail because parts drift
-> out of sync.* This run shows a real drift, present in real
-> production code, that no existing tool catches.
+> production codebase, not a synthetic fixture. *Modern software
+> systems are not broken because tools are missing. They are
+> broken because nothing understands how everything connects.*
+> This run shows a real drift, present in real production code,
+> that no existing tool catches.
 
-This case study demonstrates **steps 1 + 2 + 3** of the Typerion
-4-step mechanism (Represent → Detect → Explain → Block) on a
-real codebase, using a Cal.com-targeted Prisma parser.
+This case study demonstrates the **detection** capability of the
+Typerion control plane (one slice of the full system : represent
+the system → detect inconsistencies → explain why → block in CI).
+The parser used here is Cal.com-targeted ; generic extractors
+across more sources are roadmap.
 
 | Step | Demonstrated here ? |
 |---|---|

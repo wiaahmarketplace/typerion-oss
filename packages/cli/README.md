@@ -1,15 +1,18 @@
 # @typerion/cli
 
-The Typerion CLI — entry point to the coherence layer. Today it
-exposes step 2 (detect) of the 4-step mechanism (represent → detect
-→ explain → block) on a hand-written IR pair.
+The Typerion CLI — entry point to the **control plane for software
+reality**. Today it exposes the **detection** capability of the
+control plane on a hand-written IR pair.
 
-> *Software systems don't fail because code is wrong. They fail
-> because parts drift out of sync. Typerion makes that drift
-> visible, explainable, and controllable.*
+> *Modern software systems are not broken because tools are missing.
+> They are broken because nothing understands how everything connects.*
 
-This CLI is the door. Multi-source ingestion (step 1 generalized)
-and integrated PR-gate (step 4 generalized) are roadmap.
+> *Typerion is not the system. It is what ensures your system
+> remains one system.*
+
+This CLI is the door. Multi-source ingestion (extract from Prisma
+/ OpenAPI / TypeScript / Terraform / GitHub) and integrated PR-gate
+are roadmap.
 
 ## Install
 

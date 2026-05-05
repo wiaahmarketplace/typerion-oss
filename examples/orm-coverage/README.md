@@ -1,16 +1,17 @@
-# ORM coverage — evidence why a coherence layer is needed
+# ORM coverage — evidence why a control plane is needed
 
 Reproducible tests of how Prisma, Drizzle, and TypeORM each handle
 the canonical Typerion case-01 fixture : two TypeScript fields whose
 SQL projection lands on the same column.
 
-> **Why this evidence matters** : Typerion is **not** a competitor
-> to these ORMs. It's a coherence layer **above** them. Each ORM
-> optimizes the correctness of its own layer ; none observes the
-> cross-layer invariant. This empirical test demonstrates the gap.
+> **Why this evidence matters** : Typerion is **not** a framework,
+> a code generator, a CI/CD tool, or a cloud platform. It's a
+> **software control plane** that enforces coherence across your
+> entire stack — without replacing it.
 >
-> *"Different tools optimize their own layer's correctness — none
-> observe the cross-layer invariant. That's where Typerion sits."*
+> Each ORM here optimizes the correctness of its own layer ; none
+> observes the cross-layer invariant. This empirical test
+> demonstrates the gap that the control plane fills.
 
 ```ts
 interface User {
