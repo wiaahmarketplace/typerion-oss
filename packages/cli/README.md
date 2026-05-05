@@ -1,6 +1,15 @@
 # @typerion/cli
 
-The Typerion CLI. Verifies cross-target coherence on an IR pair.
+The Typerion CLI — entry point to the coherence layer. Today it
+exposes step 2 (detect) of the 4-step mechanism (represent → detect
+→ explain → block) on a hand-written IR pair.
+
+> *Software systems don't fail because code is wrong. They fail
+> because parts drift out of sync. Typerion makes that drift
+> visible, explainable, and controllable.*
+
+This CLI is the door. Multi-source ingestion (step 1 generalized)
+and integrated PR-gate (step 4 generalized) are roadmap.
 
 ## Install
 

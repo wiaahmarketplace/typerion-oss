@@ -1,8 +1,16 @@
-# ORM coverage — empirical test of the canonical case
+# ORM coverage — evidence why a coherence layer is needed
 
 Reproducible tests of how Prisma, Drizzle, and TypeORM each handle
 the canonical Typerion case-01 fixture : two TypeScript fields whose
 SQL projection lands on the same column.
+
+> **Why this evidence matters** : Typerion is **not** a competitor
+> to these ORMs. It's a coherence layer **above** them. Each ORM
+> optimizes the correctness of its own layer ; none observes the
+> cross-layer invariant. This empirical test demonstrates the gap.
+>
+> *"Different tools optimize their own layer's correctness — none
+> observe the cross-layer invariant. That's where Typerion sits."*
 
 ```ts
 interface User {

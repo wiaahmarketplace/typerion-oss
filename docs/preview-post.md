@@ -1,6 +1,13 @@
 # Show HN draft — preview post
 
-Two title options. Pick one before submitting.
+> **Note 2026-05-05** : this draft was written under the old "verifier"
+> framing of Typerion. The canonical positioning is now the **coherence
+> layer** : *"Software systems don't fail because code is wrong. They
+> fail because parts drift out of sync. Typerion makes that drift
+> visible, explainable, and controllable."* See the root README for
+> the current framing. Submission of an essay-style post on HN is
+> deferred to post-MVP — the case study below remains the empirical
+> anchor.
 
 ## Title — Option A (safe, factual)  — 70 chars
 
@@ -9,6 +16,10 @@ Two title options. Pick one before submitting.
 ## Title — Option B (sharper, recommended)  — 62 chars
 
 > Show HN: Types correct. Database correct. System still broken.
+
+## Title — Option C (post-pivot, layer-above framing)  — under 80 chars
+
+> A coherence layer above your stack — when your system drifts, see where and why
 
 ---
 

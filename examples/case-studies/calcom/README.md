@@ -1,9 +1,25 @@
 # Case study — Cal.com
 
 Reproducible run of Typerion against [Cal.com](https://github.com/calcom/cal.com)
-— an open-source scheduling app, ~30k stars on GitHub, multiple
-full-time engineers, TypeScript + Prisma + PostgreSQL stack with
-several years of schema history.
+— an open-source scheduling app, actively maintained, several
+years of schema history, TypeScript + Prisma + PostgreSQL stack.
+
+> **What this case study proves** : the Typerion thesis on a real
+> production codebase, not a synthetic fixture. *Software systems
+> don't fail because code is wrong. They fail because parts drift
+> out of sync.* This run shows a real drift, present in real
+> production code, that no existing tool catches.
+
+This case study demonstrates **steps 1 + 2 + 3** of the Typerion
+4-step mechanism (Represent → Detect → Explain → Block) on a
+real codebase, using a Cal.com-targeted Prisma parser.
+
+| Step | Demonstrated here ? |
+|---|---|
+| 1. Represent (extract canonical model from existing artifacts) | ✅ via the Cal.com-specific parser ; generic multi-source extractor is roadmap |
+| 2. Detect (find inconsistencies between layers) | ✅ kernel verify TS ↔ SQL pair |
+| 3. Explain (trace divergence to source line) | ✅ human-readable reason strings ; provenance-to-exact-line is roadmap |
+| 4. Block (CI-usable enforcement) | ⚠️ via `typerion verify` exit code ; integrated PR-gate is roadmap |
 
 > **Reproducibility** : `./run-case-study.sh` fetches the pinned Cal.com
 > schema, parses it to a Typerion IR, and posts it to the kernel. All

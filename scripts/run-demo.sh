@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 #
-# typerion preview demo — show one cross-target inconsistency that
-# passes local validation but corrupts data at runtime.
+# typerion preview demo — show one cross-layer inconsistency that
+# is structurally invisible to every ORM in the standard stack.
+#
+# Software systems don't fail because code is wrong. They fail
+# because parts drift out of sync. This demo shows step 2 (detect)
+# of the Typerion 4-step mechanism on a real production-pattern
+# fixture.
 #
 # Usage:
 #   ./scripts/run-demo.sh                  # uses default API
@@ -17,11 +22,10 @@ API="${TYPERION_API:-https://typerion-v1-typerion-server-r3wh.vercel.app}"
 PAT="${TYPERION_PAT:-pat_typerion_preview_demo_2026_05}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BASELINE="$ROOT/examples/baseline.json"
-CANDIDATE="$ROOT/examples/collision-case.json"
+FIXTURE="$ROOT/audit/fixtures/case-04-trigger-column-orphan.json"
 
-if [ ! -f "$BASELINE" ] || [ ! -f "$CANDIDATE" ]; then
-  echo "error: missing example fixtures at $BASELINE / $CANDIDATE" >&2
+if [ ! -f "$FIXTURE" ]; then
+  echo "error: missing fixture at $FIXTURE" >&2
   exit 1
 fi
 
@@ -29,34 +33,39 @@ cat <<EOF
 typerion preview demo
 ─────────────────────
 
-The TS code below compiles. Each field is a string. Every type-checker
-on earth will say it's fine:
+A DBA on a previous team added a 'last_seen_at' column to the
+'sessions' table via an out-of-band migration with a trigger that
+auto-updates it on every UPDATE. The application code was never
+touched. The column lives in the database, populated by the
+trigger, but it doesn't appear in the TypeScript interface.
 
-  interface User {
-    email: string;
-    emailAddress: string;
+  ALTER TABLE sessions
+    ADD COLUMN last_seen_at TIMESTAMP DEFAULT now();
+  CREATE TRIGGER session_touch BEFORE UPDATE ON sessions
+    FOR EACH ROW EXECUTE FUNCTION touch_last_seen();
+
+Meanwhile the TypeScript model never declared this column :
+
+  interface Session {
+    id: string;
+    userId: string;
+    expiresAt: Date;
+    // lastSeenAt — never declared in TypeScript
   }
 
-The SQL migration below also runs cleanly. Both columns are valid:
+The migration ran. The trigger works. The TS compiler is happy.
+Every ORM (Prisma / Drizzle / TypeORM) is structurally unable to
+catch this — the column lives outside their view of the schema.
 
-  ALTER TABLE users
-    ADD COLUMN email_address VARCHAR;        -- "emailAddress" in TS
+Typerion observes the system as a whole and sees the gap.
 
-Except: the new field 'emailAddress' was annotated to map back to the
-existing 'email' column (legacy migration shim that never got removed).
-The IR for both states:
+  fixture: audit/fixtures/case-04-trigger-column-orphan.json
 
-  baseline:  examples/baseline.json
-  candidate: examples/collision-case.json
-
-POST /v1/verify with both files →
+POST /v1/verify with the fixture →
 
 EOF
 
-REQ_BODY=$(jq -n \
-  --argjson baseline "$(cat "$BASELINE")" \
-  --argjson candidate "$(cat "$CANDIDATE")" \
-  '{baseline:{kind:"lossy-inline",value:$baseline},candidate:{kind:"lossy-inline",value:$candidate}}')
+REQ_BODY=$(jq '{baseline: .baseline, candidate: .candidate}' "$FIXTURE")
 
 RESPONSE=$(curl -fsS -X POST "$API/v1/verify" \
   -H "Authorization: Bearer $PAT" \
@@ -74,10 +83,13 @@ echo
 cat <<'EOF'
 ─────────────────────
 
-Two TS fields collapse onto one SQL column. At runtime, writing to
-user.emailAddress overwrites user.email. Type-checker said yes.
-Migration ran clean. The system is broken.
+A SQL column lives in the database. The application code does not
+model it. Both projections are individually valid. The
+cross-layer invariant is broken — and no ORM catches this, because
+the column lives outside their view of the schema.
 
-This is an early preview. Only TS ↔ SQL. No runtime integration.
-Feedback that breaks it is the most useful kind.
+This is one of six failure-mode categories in audit/fixtures/.
+The full Typerion vision extends across more projections, more
+sources, and integrated PR-gate enforcement (step 4 of the
+4-step mechanism).
 EOF
