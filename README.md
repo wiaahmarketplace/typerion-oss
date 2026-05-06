@@ -206,6 +206,46 @@ node packages/cli/bin/typerion.mjs verify \
 Same result. Exit code reflects verdict (`0` = pass, `1` = fail,
 `2` = uncertain) — usable in CI scripts.
 
+### Multi-source reconcile (Phase 04 extension)
+
+The kernel preview also exposes a multi-source reconciler. Send
+N tagged IRs (typically `prisma` + `openapi` + `typescript`) and
+receive the unified IR + every cross-source divergence + ranked
+fix suggestions in one round-trip.
+
+```bash
+curl -s -X POST https://preview.typerion.dev/v1/reconcile \
+  -H "Authorization: Bearer $TYPERION_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @- <<'JSON' | jq
+{
+  "sources": [
+    {"source": "prisma",  "ir": {"entities":[{"name":"User","fields":[{"name":"id","type":"number"},{"name":"email","type":"string"},{"name":"age","type":"number"}]}]}},
+    {"source": "openapi", "ir": {"entities":[{"name":"User","fields":[{"name":"id","type":"number"},{"name":"email","type":"string"}]}]}}
+  ]
+}
+JSON
+```
+
+Six divergence kinds detected : `entity-missing`, `field-missing`,
+`type-mismatch`, `nullability-mismatch`, `name-rename-conflict`,
+`composite-key-mismatch`. Reasons are human-readable strings ;
+the response includes per-source provenance for every divergence.
+
+Generate the IRs with the standalone extractors (no auth required) :
+
+```bash
+typerion-extract-prisma  schema.prisma  > /tmp/prisma.json
+typerion-extract-openapi spec.yaml      > /tmp/openapi.json
+typerion-extract-typescript src/types.ts > /tmp/ts.json
+# Then POST a sources[] envelope built from .candidate.value of each.
+```
+
+For automated CI integration, see the
+[`@typerion/github-action-typerion-reconcile`](https://github.com/wiaahmarketplace/Typerion_V1/tree/main/packages/github-action-typerion-reconcile)
+action — runs the full pipeline on every PR and posts a Markdown
+comment with grouped divergences.
+
 ## Empirical anchor — Cal.com case study
 
 Typerion run against [Cal.com](https://github.com/calcom/cal.com)
